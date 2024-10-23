@@ -52,7 +52,7 @@ services:
     build: 
         context: ./
         dockerfile: Dockerfile
-    container_name: house_prediction_model
+    container_name: house-value
     restart: unless-stopped
     volumes:
       - ./logs:/app/logs
@@ -60,10 +60,8 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - KAFKA_BOOTSTRAP_SERVERS=redpanda-1:29092
-    
     ports:
       - 5001:5001
-
     tty: true
     depends_on:
       redis:

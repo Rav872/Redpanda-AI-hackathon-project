@@ -14,6 +14,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY regmodel.pkl .
 COPY scaling.pkl .
+COPY templates/home.html /app/templates/home.html
 
 COPY . .
 
