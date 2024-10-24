@@ -156,3 +156,6 @@ pickled_model=pickle.load(open('regmodel.pkl', 'rb'))
 print(pickled_model.predict(scaler.transform(cali.data[0].reshape(1,-1))))
 
 # Converting entire project to end to end project following industrial standard
+
+House prediction using Linear Regression Machine learning implementation
+

@@ -208,6 +208,9 @@
 
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData.entries());
+        for (let key in data) {
+            data[key] = parseFloat(data[key]); // Convert form inputs to numbers
+        }
 
         try {
           const resp = await fetch("/predict_api", {
