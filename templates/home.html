@@ -3,155 +3,188 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>House Price Prediction</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
-        padding: 20px;
-      }
-      .container {
-        max-width: 500px;
-        margin: 0 auto;
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
-      input[type="text"] {
-        width: 100%;
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        max-width: 480px;
-      }
-      input[type="submit"]:hover {
-        background-color: #45a049;
-      }
-      .result {
-        margin-top: 20px;
-        font-size: 18px;
-        color: #333;
-      }
-
-      #sBtn {
-        width: 100%;
-        padding: 10px;
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-      #sBtn:hover {
-        background-color: #45a049;
-      }
-
-      .error {
-        background-color: #fee2e2;
-        border: 1px solid #f87171;
-        color: #b91c1c;
-        border-radius: 0.375rem;
-        margin-bottom: 1rem;
-        position: relative;
-        padding: 1rem;
-      }
-
-      .success {
-        background-color: #d1fae5;
-        border: 1px solid #34d399;
-        color: #047857;
-        padding: 1rem;
-        border-radius: 0.375rem;
-        margin-bottom: 1rem;
-        position: relative;
-      }
-
-      .pending {
-        background-color: #f3f4f6;
-        border: 1px solid #d1d5db;
-        color: #6b7280;
-        padding: 1rem;
-        border-radius: 0.375rem;
-        margin-bottom: 1rem;
-        position: relative;
-      }
-    </style>
+    <title>AI House Price Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style></style>
   </head>
-  <body>
-    <div class="container">
-      <div class="result">
-        <p id="predictionResult"></p>
+  <body
+    class="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen flex items-center justify-center p-4"
+  >
+    <div
+      class="container max-w-6xl w-full bg-white rounded-2xl shadow-2xl p-8 transition-all duration-500 ease-in-out transform"
+    >
+      <h1
+        class="text-4xl font-extrabold text-center mb-8 text-indigo-800 tracking-tight"
+      >
+        AI House Price Predictor
+      </h1>
+      <div class="mb-8 text-center">
+        <p
+          id="predictionResult"
+          class="text-2xl font-semibold text-indigo-600 transition-all duration-300"
+        ></p>
       </div>
-      <h2>House Price Prediction</h2>
-      <form id="predictionForm" action="/predict" method="POST">
-        <label for="MedInc">Median Income:</label>
-        <input
-          type="text"
-          id="MedInc"
-          name="MedInc"
-          placeholder="Enter Median Income"
-        />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <form
+            id="predictionForm"
+            action="/predict"
+            method="POST"
+            class="space-y-6"
+          >
+            <div class="space-y-4">
+              <div>
+                <label
+                  for="MedInc"
+                  class="block text-sm font-medium text-gray-700"
+                  >Median Income:</label
+                >
+                <input
+                  type="range"
+                  id="MedInc"
+                  name="MedInc"
+                  min="0"
+                  max="150"
+                  step="0.1"
+                  class="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <span id="MedIncValue" class="text-sm text-gray-600"></span>
+              </div>
 
-        <label for="HouseAge">House Age:</label>
-        <input
-          type="text"
-          id="HouseAge"
-          name="HouseAge"
-          placeholder="Enter House Age"
-        />
+              <div>
+                <label
+                  for="HouseAge"
+                  class="block text-sm font-medium text-gray-700"
+                  >House Age:</label
+                >
+                <input
+                  type="range"
+                  id="HouseAge"
+                  name="HouseAge"
+                  min="0"
+                  max="100"
+                  step="1"
+                  class="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <span id="HouseAgeValue" class="text-sm text-gray-600"></span>
+              </div>
 
-        <label for="AveRooms">Average Rooms:</label>
-        <input
-          type="text"
-          id="AveRooms"
-          name="AveRooms"
-          placeholder="Enter Average Rooms"
-        />
+              <div>
+                <label
+                  for="AveRooms"
+                  class="block text-sm font-medium text-gray-700"
+                  >Average Rooms:</label
+                >
+                <input
+                  type="number"
+                  id="AveRooms"
+                  name="AveRooms"
+                  placeholder="Enter Average Rooms"
+                  class="mt-1 block w-full rounded-md border-gray-700 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
+                />
+              </div>
 
-        <label for="Population">Population:</label>
-        <input
-          type="text"
-          id="Population"
-          name="Population"
-          placeholder="Enter Population"
-        />
+              <div>
+                <label
+                  for="Population"
+                  class="block text-sm font-medium text-gray-700"
+                  >Population:</label
+                >
+                <input
+                  type="number"
+                  id="Population"
+                  name="Population"
+                  placeholder="Enter Population"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
+                />
+              </div>
 
-        <label for="Latitude">Latitude:</label>
-        <input
-          type="text"
-          id="Latitude"
-          name="Latitude"
-          placeholder="Enter Latitude"
-        />
+              <div>
+                <label
+                  for="Latitude"
+                  class="block text-sm font-medium text-gray-700"
+                  >Latitude:</label
+                >
+                <input
+                  type="number"
+                  id="Latitude"
+                  name="Latitude"
+                  placeholder="Enter Latitude"
+                  step="0.000001"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
+                />
+              </div>
 
-        <label for="AveBedrms">Average Bedrooms:</label>
-        <input
-          type="text"
-          id="AveBedrms"
-          name="AveBedrms"
-          placeholder="Enter Average Bedrooms"
-        />
+              <div>
+                <label
+                  for="AveBedrms"
+                  class="block text-sm font-medium text-gray-700"
+                  >Average Bedrooms:</label
+                >
+                <input
+                  type="number"
+                  id="AveBedrms"
+                  name="AveBedrms"
+                  placeholder="Enter Average Bedrooms"
+                  step="0.1"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
+                />
+              </div>
 
-        <label for="AveOccup">Average Occupancy:</label>
-        <input
-          type="text"
-          id="AveOccup"
-          name="AveOccup"
-          placeholder="Enter Average Occupancy"
-        />
+              <div>
+                <label
+                  for="AveOccup"
+                  class="block text-sm font-medium text-gray-700"
+                  >Average Occupancy:</label
+                >
+                <input
+                  type="number"
+                  id="AveOccup"
+                  name="AveOccup"
+                  placeholder="Enter Average Occupancy"
+                  step="0.1"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
+                />
+              </div>
 
-        <label for="Longitude">Longitude:</label>
-        <input
-          type="text"
-          id="Longitude"
-          name="Longitude"
-          placeholder="Enter Longitude"
-        />
+              <div>
+                <label
+                  for="Longitude"
+                  class="block text-sm font-medium text-gray-700"
+                  >Longitude:</label
+                >
+                <input
+                  type="number"
+                  id="Longitude"
+                  name="Longitude"
+                  placeholder="Enter Longitude"
+                  step="0.000001"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
+                />
+              </div>
+            </div>
 
-        <button type="submit" name="sBtn" id="sBtn">Predict</button>
-      </form>
+            <button
+              type="submit"
+              name="sBtn"
+              id="sBtn"
+              class="w-full py-3 px-6 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 py-3 px-2"
+            >
+              Predict Price
+            </button>
+          </form>
+        </div>
+        <div class="bg-indigo-50 p-6 rounded-xl shadow-inner">
+          <h2 class="text-2xl font-bold mb-4 text-indigo-800">
+            Price Prediction Insights
+          </h2>
+          <div id="chartContainer" class="w-full h-64">
+            <canvas id="predictionChart"></canvas>
+          </div>
+          <div id="predictionAnalysis" class="mt-4 text-sm text-gray-600"></div>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -165,10 +198,12 @@
       const form = document.getElementById("predictionForm");
       const sBtn = document.getElementById("sBtn");
       const resultElement = document.getElementById("predictionResult");
+      const analysisElement = document.getElementById("predictionAnalysis");
+      let chart;
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        sBtn.innerText = "Predicting..";
+        sBtn.innerHTML = '<span class="animate-pulse">Predicting...</span>';
         sBtn.setAttribute("disabled", true);
 
         const formData = new FormData(event.target);
@@ -184,9 +219,9 @@
           });
           const result = await resp.json();
           console.log(result);
-          resultElement.innerHTML = `Price prediction in progress...`;
-          resultElement.classList.add("pending");
-          resultElement.classList.remove("error", "success");
+          resultElement.innerHTML = `<span class="animate-pulse">AI is analyzing the data...</span>`;
+          resultElement.classList.add("text-indigo-600");
+          resultElement.classList.remove("text-red-600");
           window.scrollTo({
             top: 0,
             behavior: "smooth",
@@ -195,12 +230,12 @@
           startEventSource();
         } catch (err) {
           console.error("Failed to send data", err);
-          resultElement.innerText = "Failed to send data";
-          resultElement.classList.add("error");
-          resultElement.classList.remove("success", "pending");
+          resultElement.innerText = "Failed to send data. Please try again.";
+          resultElement.classList.add("text-red-600");
+          resultElement.classList.remove("text-indigo-600");
 
           sBtn.removeAttribute("disabled");
-          sBtn.innerText = "Predict";
+          sBtn.innerText = "Predict Price";
           window.scrollTo({
             top: 0,
             behavior: "smooth",
@@ -216,18 +251,21 @@
             var data = JSON.parse(event.data);
             console.log(data);
 
-            resultElement.innerHTML = `The House price prediction is ${formatCurrency(
+            resultElement.innerHTML = `The predicted house price is <span class="font-bold text-3xl">${formatCurrency(
               data?.prediction
-            )}`;
-            resultElement.classList.add("success");
-            resultElement.classList.remove("error", "pending");
+            )}</span>`;
+            resultElement.classList.add("text-indigo-600");
+            resultElement.classList.remove("text-red-600", "animate-pulse");
 
             sBtn.removeAttribute("disabled");
-            sBtn.innerText = "Predict";
+            sBtn.innerText = "Predict Price";
             window.scrollTo({
               top: 0,
               behavior: "smooth",
             });
+
+            updateChart(data.prediction);
+            analyzePrice(data.prediction);
           },
           false
         );
@@ -237,13 +275,12 @@
           function (event) {
             console.log("Failed to connect to event stream. Is Redis running?");
             resultElement.innerText =
-              "Failed Failed to connect to event stream. Is Redis running?";
-
-            resultElement.classList.add("error");
-            resultElement.classList.remove("success", "pending");
+              "Failed to connect to event stream. Please try again later.";
+            resultElement.classList.add("text-red-600");
+            resultElement.classList.remove("text-indigo-600", "animate-pulse");
 
             sBtn.removeAttribute("disabled");
-            sBtn.innerText = "Predict";
+            sBtn.innerText = "Predict Price";
             window.scrollTo({
               top: 0,
               behavior: "smooth",
@@ -252,6 +289,73 @@
           false
         );
       }
+
+      document.getElementById("MedInc").addEventListener("input", function () {
+        document.getElementById("MedIncValue").textContent = `$${this.value}k`;
+      });
+      document
+        .getElementById("HouseAge")
+        .addEventListener("input", function () {
+          document.getElementById(
+            "HouseAgeValue"
+          ).textContent = `${this.value} years`;
+        });
+
+      function initChart() {
+        const ctx = document.getElementById("predictionChart").getContext("2d");
+        chart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["Predicted Price"],
+            datasets: [
+              {
+                label: "House Price",
+                data: [0],
+                backgroundColor: "rgba(99, 102, 241, 0.5)",
+                borderColor: "rgb(99, 102, 241)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Price (USD)",
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateChart(prediction) {
+        chart.data.datasets[0].data = [prediction];
+        chart.update();
+      }
+
+      function analyzePrice(price) {
+        let analysis = "";
+        if (price < 10000) {
+          analysis =
+            "This price is relatively low. The property might be in a less desirable area or require significant renovations.";
+        } else if (price < 300000) {
+          analysis =
+            "This price is in the moderate range. It could be a good opportunity for first-time homebuyers or investors.";
+        } else if (price < 600000) {
+          analysis =
+            "This price indicates a higher-end property. It likely has desirable features or is located in a sought-after area.";
+        } else {
+          analysis =
+            "This is a luxury property price. It suggests a high-end home with premium features or a prime location.";
+        }
+        analysisElement.innerText = analysis;
+      }
+
+      initChart();
     </script>
   </body>
 </html>
