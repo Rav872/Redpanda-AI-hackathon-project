@@ -43,13 +43,6 @@ threads = []
 def home():
     return render_template('home.html')
 
-# @app.route('/predict_api', methods=['POST'])
-# def predict_api():
-#     req_body = request.json
-#     data = []
-#     if req_body is not None:
-#         data = [float(req_body[k]) for k in req_body]
-
 @app.route('/predict_api', methods=['POST'])
 def predict_api():
     req_body = request.json
@@ -66,47 +59,6 @@ def predict_api():
     producer.send(payload)  # Send the request data with the unique ID
     return jsonify({"status": "Data sent for processing", "request_id": request_id})
 
-    producer.send(data)
-    return jsonify({"status": "Data sent for processing"})
-
-# def request_consume():
-#     global is_running
-#     print("--->Consuming process started<----")
-#     kfkconsumer = KafkaConsumer(
-#         bootstrap_servers=[KAFKA_BOOTSTRAP_SERVERS],
-#         group_id="prediction_group",
-#         auto_offset_reset="earliest",
-#         enable_auto_commit=False,
-#         consumer_timeout_ms=1000,
-#         value_deserializer=lambda m: json.loads(m.decode('ascii'))
-#     )
-
-#     result_producer = Producer(result_topic)
-
-#     kfkconsumer.subscribe([request_topic])
-#     try:
-#         while is_running:
-#             message = kfkconsumer.poll(100)
-#             if not message:
-#                 time.sleep(1)
-#                 continue
-
-#             for topic_partition, messages in message.items():
-#                 for msg in messages:
-#                     data = msg.value
-#                     final_input = scalar.transform(np.array(data).reshape(1,-1))
-#                     prediction = regmodel.predict(final_input)[0]
-                    
-#                     output = {"prediction": prediction}
-#                     result_producer.send(output)
-#                     print(f"Prediction made: {prediction}")
-
-#             kfkconsumer.commit()
-#     except Exception as e:
-#         print(f"Error occurred consuming: {str(e)}")
-#     finally:
-#         print("Closing consumer")
-#         kfkconsumer.close()
 
 def request_consume():
     global is_running
@@ -168,27 +120,6 @@ def initialize_prediction_consumer():
             value_deserializer=lambda m: json.loads(m.decode('ascii'))
         )
 
-# def prediction_response():
-#     global prediction_consumer
-    
-#     try:
-#         if prediction_consumer is None:
-#             initialize_prediction_consumer()
-            
-#         messages = prediction_consumer.poll(timeout_ms=100)
-        
-#         if messages:
-#             with app.app_context():
-#                 for topic_partition, msgs in messages.items():
-#                     for msg in msgs:
-#                         data = msg.value
-#                         print(f"Publishing prediction: {data}")
-#                         sse.publish(data, type='prediction')
-#                         print("New Prediction Time: ", datetime.datetime.now())
-        
-#     except Exception as e:
-#         print(f"Error in prediction_response: {str(e)}")
-#         prediction_consumer = None
 
 def prediction_response():
     global prediction_consumer
@@ -251,6 +182,7 @@ def signal_handler(signum, frame):
     sys.exit(0)
 
 if __name__ == '__main__':
+    print("DEBUG: In starting of the app.py")
     threading.Thread(target=request_consume, daemon=True).start()
     threading.Thread(target=scheduler_thread, daemon=True).start()
 
