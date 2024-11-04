@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import pickle
 import time
@@ -14,6 +15,7 @@ import numpy as np
 import pandas as pd
 import signal
 import sys
+import uuid
 from flask_session import Session
 import redis
 import uuid
@@ -59,13 +61,8 @@ def predict_api():
     data = []
     if req_body is not None:
         data = [float(req_body[k]) for k in req_body]
-    
-    request_data = {
-        'session_id': session.get('sid'),
-        'data': data
-    }
 
-    producer.send(request_data)
+    producer.send(data)
     return jsonify({"status": "Data sent for processing"})
 
 def request_consume():
@@ -114,6 +111,7 @@ def request_consume():
         print("Closing consumer")
         kfkconsumer.close()
 
+
 def initialize_prediction_consumer():
     global prediction_consumer
     if prediction_consumer is None:
@@ -126,6 +124,7 @@ def initialize_prediction_consumer():
             consumer_timeout_ms=500,
             value_deserializer=lambda m: json.loads(m.decode('ascii'))
         )
+
 
 def prediction_response():
     global prediction_consumer
@@ -149,6 +148,7 @@ def prediction_response():
     except Exception as e:
         print(f"Error in prediction_response: {str(e)}")
         prediction_consumer = None
+
 
 def scheduler_thread():
     scheduler = BackgroundScheduler(daemon=True)
@@ -187,6 +187,7 @@ def signal_handler(signum, frame):
     sys.exit(0)
 
 if __name__ == '__main__':
+    print("DEBUG: In starting of the app.py")
     threading.Thread(target=request_consume, daemon=True).start()
     threading.Thread(target=scheduler_thread, daemon=True).start()
 
