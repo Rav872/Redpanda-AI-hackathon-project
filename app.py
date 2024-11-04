@@ -15,7 +15,6 @@ import numpy as np
 import pandas as pd
 import signal
 import sys
-import uuid
 from flask_session import Session
 import redis
 import uuid
@@ -61,8 +60,13 @@ def predict_api():
     data = []
     if req_body is not None:
         data = [float(req_body[k]) for k in req_body]
+    
+    request_data = {
+        'session_id': session.get('sid'),
+        'data': data
+    }
 
-    producer.send(data)
+    producer.send(request_data)
     return jsonify({"status": "Data sent for processing"})
 
 def request_consume():
@@ -92,6 +96,8 @@ def request_consume():
                     request_data = msg.value
                     session_id = request_data['session_id']
                     data = request_data['data']
+
+                    print(request_data)
 
                     final_input = scalar.transform(np.array(data).reshape(1,-1))
                     prediction = regmodel.predict(final_input)[0]
@@ -193,8 +199,7 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    
-    start_background_threads()
+
 
     app.run(debug=False, use_reloader=False, host="0.0.0.0", port=5001)
     
