@@ -3,7 +3,7 @@ import os
 import pickle
 import time
 import webbrowser
-from flask import Flask, Response, json, request, jsonify, render_template
+from flask import Flask, Response, json, request, jsonify, render_template, session
 from producer import Producer
 from kafka import KafkaConsumer
 import threading
@@ -14,15 +14,25 @@ import numpy as np
 import pandas as pd
 import signal
 import sys
+from flask_session import Session
+import redis
+import uuid
 
 load_dotenv()
 
 REDIS_URL = os.getenv("REDIS_URL")
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS")
-
 app = Flask(__name__)
 app.config["REDIS_URL"] = REDIS_URL
 app.register_blueprint(sse, url_prefix='/stream')
+
+
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_REDIS'] = redis.from_url(REDIS_URL)
+app.secret_key = os.getenv('SECRET_KEY', default='BAD_SECRET_KEY')
+Session(app)
 
 # Load the model
 regmodel = pickle.load(open('regmodel.pkl', 'rb'))
@@ -39,6 +49,8 @@ threads = []
 
 @app.route('/')
 def home():
+    sid = uuid.uuid4()
+    session["sid"] = str(sid)
     return render_template('home.html')
 
 @app.route('/predict_api', methods=['POST'])
@@ -47,8 +59,13 @@ def predict_api():
     data = []
     if req_body is not None:
         data = [float(req_body[k]) for k in req_body]
+    
+    request_data = {
+        'session_id': session.get('sid'),
+        'data': data
+    }
 
-    producer.send(data)
+    producer.send(request_data)
     return jsonify({"status": "Data sent for processing"})
 
 def request_consume():
@@ -75,13 +92,20 @@ def request_consume():
 
             for topic_partition, messages in message.items():
                 for msg in messages:
-                    data = msg.value
+                    request_data = msg.value
+                    session_id = request_data['session_id']
+                    data = request_data['data']
+
                     final_input = scalar.transform(np.array(data).reshape(1,-1))
                     prediction = regmodel.predict(final_input)[0]
                     
-                    output = {"prediction": prediction}
+                    output = {
+                        "session_id": session_id,
+                        "prediction": prediction
+                    }
+
                     result_producer.send(output)
-                    print(f"Prediction made: {prediction}")
+                    print(f"Prediction made for session {session_id}: {prediction}")
 
             kfkconsumer.commit()
     except Exception as e:
@@ -109,18 +133,19 @@ def prediction_response():
     try:
         if prediction_consumer is None:
             initialize_prediction_consumer()
-            
+
         messages = prediction_consumer.poll(timeout_ms=100)
-        
+
         if messages:
             with app.app_context():
                 for topic_partition, msgs in messages.items():
                     for msg in msgs:
                         data = msg.value
-                        print(f"Publishing prediction: {data}")
-                        sse.publish(data, type='prediction')
-                        print("New Prediction Time: ", datetime.datetime.now())
-        
+
+                        session_id = data.get('session_id')
+                        if session_id:
+                            sse.publish(data, type='prediction')
+
     except Exception as e:
         print(f"Error in prediction_response: {str(e)}")
         prediction_consumer = None

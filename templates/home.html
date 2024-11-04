@@ -6,7 +6,16 @@
     <title>AI House Price Predictor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style></style>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <style>
+      #map {
+        height: 300px;
+      }
+    </style>
   </head>
   <body
     class="bg-gradient-to-br from-blue-100 to-indigo-200 min-h-screen flex items-center justify-center p-4"
@@ -81,7 +90,7 @@
                   id="AveRooms"
                   name="AveRooms"
                   placeholder="Enter Average Rooms"
-                  class="mt-1 block w-full rounded-md border-gray-700 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
                 />
               </div>
 
@@ -92,28 +101,15 @@
                   >Population:</label
                 >
                 <input
-                  type="number"
+                  type="range"
                   id="Population"
                   name="Population"
-                  placeholder="Enter Population"
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
+                  min="200000"
+                  max="5000000"
+                  step="10000"
+                  class="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer"
                 />
-              </div>
-
-              <div>
-                <label
-                  for="Latitude"
-                  class="block text-sm font-medium text-gray-700"
-                  >Latitude:</label
-                >
-                <input
-                  type="number"
-                  id="Latitude"
-                  name="Latitude"
-                  placeholder="Enter Latitude"
-                  step="0.000001"
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
-                />
+                <span id="PopulationValue" class="text-sm text-gray-600"></span>
               </div>
 
               <div>
@@ -149,18 +145,21 @@
               </div>
 
               <div>
-                <label
-                  for="Longitude"
-                  class="block text-sm font-medium text-gray-700"
-                  >Longitude:</label
+                <label for="map" class="block text-sm font-medium text-gray-700"
+                  >Location:</label
                 >
+                <div id="map" class="w-full rounded-md shadow-sm"></div>
                 <input
-                  type="number"
+                  type="hidden"
+                  id="Latitude"
+                  name="Latitude"
+                  value="37.7749"
+                />
+                <input
+                  type="hidden"
                   id="Longitude"
                   name="Longitude"
-                  placeholder="Enter Longitude"
-                  step="0.000001"
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-3 px-2"
+                  value="-122.4194"
                 />
               </div>
             </div>
@@ -201,6 +200,8 @@
       const analysisElement = document.getElementById("predictionAnalysis");
       let chart;
 
+      const currentSessionId = "{{ session['sid'] }}";
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         sBtn.innerHTML = '<span class="animate-pulse">Predicting...</span>';
@@ -208,7 +209,7 @@
 
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData.entries());
-
+        console.log(data);
         try {
           const resp = await fetch("/predict_api", {
             method: "POST",
@@ -249,23 +250,23 @@
           "prediction",
           function (event) {
             var data = JSON.parse(event.data);
-            console.log(data);
+            if (data.session_id === currentSessionId) {
+              resultElement.innerHTML = `The predicted house price is <span class="font-bold text-3xl">${formatCurrency(
+                data?.prediction
+              )}</span>`;
+              resultElement.classList.add("text-indigo-600");
+              resultElement.classList.remove("text-red-600", "animate-pulse");
 
-            resultElement.innerHTML = `The predicted house price is <span class="font-bold text-3xl">${formatCurrency(
-              data?.prediction
-            )}</span>`;
-            resultElement.classList.add("text-indigo-600");
-            resultElement.classList.remove("text-red-600", "animate-pulse");
+              sBtn.removeAttribute("disabled");
+              sBtn.innerText = "Predict Price";
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
 
-            sBtn.removeAttribute("disabled");
-            sBtn.innerText = "Predict Price";
-            window.scrollTo({
-              top: 0,
-              behavior: "smooth",
-            });
-
-            updateChart(data.prediction);
-            analyzePrice(data.prediction);
+              updateChart(data.prediction);
+              analyzePrice(data.prediction);
+            }
           },
           false
         );
@@ -273,18 +274,25 @@
         source.addEventListener(
           "error",
           function (event) {
-            console.log("Failed to connect to event stream. Is Redis running?");
-            resultElement.innerText =
-              "Failed to connect to event stream. Please try again later.";
-            resultElement.classList.add("text-red-600");
-            resultElement.classList.remove("text-indigo-600", "animate-pulse");
+            if (data.session_id === currentSessionId) {
+              console.log(
+                "Failed to connect to event stream. Is Redis running?"
+              );
+              resultElement.innerText =
+                "Failed to connect to event stream. Please try again later.";
+              resultElement.classList.add("text-red-600");
+              resultElement.classList.remove(
+                "text-indigo-600",
+                "animate-pulse"
+              );
 
-            sBtn.removeAttribute("disabled");
-            sBtn.innerText = "Predict Price";
-            window.scrollTo({
-              top: 0,
-              behavior: "smooth",
-            });
+              sBtn.removeAttribute("disabled");
+              sBtn.innerText = "Predict Price";
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
+            }
           },
           false
         );
@@ -299,6 +307,13 @@
           document.getElementById(
             "HouseAgeValue"
           ).textContent = `${this.value} years`;
+        });
+      document
+        .getElementById("Population")
+        .addEventListener("input", function () {
+          document.getElementById("PopulationValue").textContent = `${Number(
+            this.value
+          ).toLocaleString()}`;
         });
 
       function initChart() {
@@ -356,6 +371,31 @@
       }
 
       initChart();
+
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoiZW1lcmFsZGxzIiwiYSI6ImNtMnY0eDkybDA5bHoya3NhYWg0cTYxcnYifQ.wJB3T8ugjdeKnSjuqIr_Kw";
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/streets-v11",
+        center: [-122.4194, 37.7749],
+        zoom: 10,
+      });
+
+      const marker = new mapboxgl.Marker({
+        draggable: true,
+      })
+        .setLngLat([-122.4194, 37.7749])
+        .addTo(map);
+
+      function onDragEnd() {
+        const lngLat = marker.getLngLat();
+        document.getElementById("Latitude").value = lngLat.lat.toFixed(6);
+        document.getElementById("Longitude").value = lngLat.lng.toFixed(6);
+
+        console.log(lngLat);
+      }
+
+      marker.on("dragend", onDragEnd);
     </script>
   </body>
 </html>
